@@ -1,0 +1,62 @@
+{
+  "gpu": "NVIDIA GeForce RTX 5070 Ti",
+  "torch": "2.7.1+cu128",
+  "network": "blocked at socket.connect",
+  "steps": 10,
+  "samples": [
+    {
+      "id": "voice-1",
+      "seconds": 35.59,
+      "frames": 96000,
+      "channels": 1,
+      "difference_rms": 0.02406143583357334,
+      "input_high_band_ratio": 1.2966656324760884e-05,
+      "output_high_band_ratio": 0.0680827521341634
+    },
+    {
+      "id": "voice-2",
+      "seconds": 2.55,
+      "frames": 96000,
+      "channels": 1,
+      "difference_rms": 0.02540883608162403,
+      "input_high_band_ratio": 1.56712022006032e-05,
+      "output_high_band_ratio": 0.08538703396508696
+    },
+    {
+      "id": "music-1",
+      "seconds": 3.94,
+      "frames": 96000,
+      "channels": 2,
+      "difference_rms": 0.025289032608270645,
+      "input_high_band_ratio": 5.89076973174968e-10,
+      "output_high_band_ratio": 0.00984365809052249
+    },
+    {
+      "id": "music-2",
+      "seconds": 4.14,
+      "frames": 96000,
+      "channels": 2,
+      "difference_rms": 0.010943098925054073,
+      "input_high_band_ratio": 3.7538010371981455e-10,
+      "output_high_band_ratio": 0.0016557273003412702
+    },
+    {
+      "id": "vocal-music-1",
+      "seconds": 4.05,
+      "frames": 96000,
+      "channels": 2,
+      "difference_rms": 0.024588802829384804,
+      "input_high_band_ratio": 6.7686416384291e-07,
+      "output_high_band_ratio": 0.01609675530664496
+    },
+    {
+      "id": "vocal-music-2",
+      "seconds": 2.0,
+      "frames": 96000,
+      "channels": 1,
+      "difference_rms": 0.042319122701883316,
+      "input_high_band_ratio": 4.96045407175517e-08,
+      "output_high_band_ratio": 0.07594266610134573
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+[package]
+name = "neko-audio-engine"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+nnnoiseless = { version = "0.5.2", default-features = false }
+wasm-bindgen = "0.2"
+
+[dev-dependencies]
+hound = "3.5"

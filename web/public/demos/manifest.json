@@ -1,0 +1,58 @@
+[
+  {
+    "id": "voice-1",
+    "name": "清晨的声音",
+    "category": "纯人声",
+    "description": "中文旁白 · 合成语音",
+    "path": "/demos/voice-1.wav"
+  },
+  {
+    "id": "voice-2",
+    "name": "Every sound",
+    "category": "纯人声",
+    "description": "英文朗读 · 合成语音",
+    "path": "/demos/voice-2.wav"
+  },
+  {
+    "id": "music-1",
+    "name": "玻璃琴的午后",
+    "category": "纯音乐",
+    "description": "原创合成旋律 · 立体声",
+    "path": "/demos/music-1.wav"
+  },
+  {
+    "id": "music-2",
+    "name": "月光慢拍",
+    "category": "纯音乐",
+    "description": "原创合成旋律 · 立体声",
+    "path": "/demos/music-2.wav"
+  },
+  {
+    "id": "vocal-music-1",
+    "name": "Auld Lang Syne · 1910",
+    "category": "人声音乐",
+    "description": "Frank C. Stanley · 演唱与伴奏",
+    "path": "/demos/vocal-music-1.wav",
+    "source": "https://commons.wikimedia.org/wiki/File:Auld_Lang_Syne.ogg",
+    "license": "Public domain (composition and historical recording)",
+    "excerpt_seconds": [
+      30,
+      42
+    ],
+    "source_sha256": "0d277de969ce02959923ec32fd94897a6791cf183fd954198d5e02166e36fb04"
+  },
+  {
+    "id": "vocal-music-2",
+    "name": "Daisy Bell · 1894",
+    "category": "人声音乐",
+    "description": "Edward M. Favor · 演唱与伴奏",
+    "path": "/demos/vocal-music-2.wav",
+    "source": "https://commons.wikimedia.org/wiki/File:Daisy_Bell_sung_by_Edward_M._Favor.ogg",
+    "license": "Public domain (composition and historical recording)",
+    "excerpt_seconds": [
+      20,
+      32
+    ],
+    "source_sha256": "26322d595d596470474543b069a53ee23c6ecea0ca18d6093903a00155bdf82b"
+  }
+]

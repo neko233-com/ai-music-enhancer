@@ -1,0 +1,11 @@
+node_modules/
+target/
+web/src/wasm/
+web/dist/
+models/
+.venv/
+.cache/
+artifacts/
+test-results/
+THIRD_PARTY_LICENSES/
+Cargo.lock
