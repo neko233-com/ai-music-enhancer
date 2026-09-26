@@ -38,6 +38,8 @@ jobs:
             target/release/neko-audio.exe
             README.md
             LICENSE
+            THIRD_PARTY.md
+            THIRD_PARTY_LICENSES/
           if-no-files-found: error
 
   local-service:
