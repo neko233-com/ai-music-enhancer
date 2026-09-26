@@ -1,11 +1,20 @@
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
-test('local GPU reconstruction and real FLAC download through the web UI', async ({ page }) => {
+test('local GPU reconstruction and real FLAC download through the web UI', async ({
+  page,
+  context,
+}) => {
   test.skip(
     process.env.NEKO_GPU_E2E !== '1',
     'Opt-in test requires local NVIDIA GPU and installed AudioSR model',
   );
   test.setTimeout(180000);
+  if (process.env.E2E_URL?.startsWith('https:')) {
+    // Simulate the user allowing this site's local-network permission in an isolated test context.
+    await context.grantPermissions(['local-network-access'], {
+      origin: new URL(process.env.E2E_URL).origin,
+    });
+  }
   await page.goto('/');
   await page.getByRole('button', { name: '检测连接', exact: true }).click();
   await expect(page.locator('.service strong')).toContainText('模型就绪', { timeout: 15000 });

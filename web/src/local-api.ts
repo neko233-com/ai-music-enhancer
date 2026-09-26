@@ -11,7 +11,7 @@ export async function api(path: string, init: RequestInit = {}) {
     });
   } catch {
     throw new Error(
-      '无法连接本机 GPU 服务。请运行 scripts/start-local.ps1，或从 http://127.0.0.1:8765 打开工作台。',
+      '无法连接本机 GPU 服务。请运行 scripts/start-local.ps1；若已启动，请允许浏览器访问本机网络，或从 http://127.0.0.1:8765 打开工作台。',
     );
   }
   if (!result.ok) {

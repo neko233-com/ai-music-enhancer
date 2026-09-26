@@ -67,13 +67,11 @@ test('user uploads, rejects corrupt input, and mobile layout has no overflow', a
   await expect(page.getByRole('status')).toContainText('音频已就绪');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: 'artifacts/studio-mobile.png', fullPage: true });
-  await page
-    .getByLabel('上传音频')
-    .setInputFiles({
-      name: 'broken.wav',
-      mimeType: 'audio/wav',
-      buffer: Buffer.from('broken audio'),
-    });
+  await page.getByLabel('上传音频').setInputFiles({
+    name: 'broken.wav',
+    mimeType: 'audio/wav',
+    buffer: Buffer.from('broken audio'),
+  });
   await expect(page.getByRole('alert')).toBeVisible();
   await expect(page.getByRole('button', { name: '开始增强', exact: true })).toBeDisabled();
 });
@@ -95,4 +93,17 @@ test('offline reload retains all demos and wasm processing', async ({ page, cont
   await page.getByRole('button', { name: '开始增强', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('本地调音完成');
   await context.setOffline(false);
+});
+
+test('blocked local-network access explains the fallback to the offline studio', async ({
+  page,
+}) => {
+  await page.route('**/api/health', (route) => route.abort('blockedbyclient'));
+  await page.goto('/');
+  await page.getByRole('button', { name: '检测连接', exact: true }).click();
+  await expect(page.locator('.service strong')).toContainText('浏览器网络权限');
+  await expect(page.getByRole('link', { name: '打开本机离线工作台' })).toHaveAttribute(
+    'href',
+    'http://127.0.0.1:8765',
+  );
 });

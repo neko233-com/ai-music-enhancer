@@ -7,7 +7,7 @@ Environment: Windows, Rust 1.96.0, Node 24, Python 3.10, NVIDIA RTX 5070 Ti 16 G
 - Rust: 6 signal/encoding tests and 1 CLI integration test. Includes all 24 WAV rate/depth combinations, invalid input, stereo isolation, partial RNNoise frames, silence, peak limiting, low-pass alias rejection and overwrite protection.
 - TypeScript: 4 audio input/size tests. Preserves original 192 kHz PCM input, rejects truncated/non-finite WAV, estimates bitrate and samples both channels for waveforms.
 - Local API: 6 tests. Origin/host/header checks, malformed uploads, cancellation between chunks, overlap-add continuity, real FLAC and MP3 encoding.
-- Browser: 3 portable end-to-end tests. Real WASM processing; actual original/enhanced playback and switching; downloaded 192 kHz float WAV headers; MP3 frames; file upload errors; 390 px mobile overflow check; full offline reload and processing with the browser network disabled.
+- Browser: 4 portable end-to-end tests. Real WASM processing; actual original/enhanced playback and switching; downloaded 192 kHz float WAV headers; MP3 frames; file upload errors; 390 px mobile overflow check; full offline reload and processing with the browser network disabled; local-network permission failure and the offline entry point.
 - Additional opt-in browser GPU test: actual local AudioSR processing, enhanced playback and FLAC download. Standard CI skips it because hosted runners lack the local GPU/model.
 - `cargo fmt`, `cargo clippy -D warnings`, TypeScript compilation, production build, `actionlint`, `wrangler deploy --dry-run`.
 
@@ -24,6 +24,10 @@ The CLI separately processed the full 12-second stereo music demo through the HT
 ## Browser and visual inspection
 
 The in-app browser loaded the local studio, inspected the rendered controls and confirmed `NVIDIA GeForce RTX 5070 Ti · 模型就绪` after clicking 检测连接. Playwright provides repeatable regression tests, downloads and screenshots; it is additional automation, not a substitute for the in-app browser check.
+
+Production GPU tests explicitly grant the site's local-network permission in an isolated browser context. Without permission, Chromium blocks the public site's connection to loopback. The app explains this and links to the fully local studio. This follows [Chrome's local-network permission model](https://developer.chrome.com/release-notes/142); no browser security flags are disabled.
+
+Verified on `https://music.neko233.com`: real WASM processing, original/enhanced playback, WAV/MP3 exports, mobile upload handling, offline reload, and the actual GPU reconstruction/FLAC flow with permission granted. Cold GPU browser flow completed in about 47 seconds on the verification machine.
 
 Reference: `design/concept.png` (1505 × 1045). Browser captures include 1440 × 1000 desktop, 390 × 844 mobile and a 1505 × 1045 native-reference viewport for the GPU flow. Both the concept and browser screenshots were opened with `view_image` for visual review.
 

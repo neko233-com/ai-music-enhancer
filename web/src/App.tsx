@@ -274,7 +274,7 @@ export default function App() {
       const s = await health();
       setService(s.ready ? `${s.gpu} · 模型就绪` : s.error || '模型未安装');
     } catch {
-      setService('未连接 · 请启动本地服务');
+      setService('未连接 · 请检查本机服务或浏览器网络权限');
     }
   };
   const sourceRms = useMemo(() => rms(source), [source]),
@@ -493,6 +493,10 @@ export default function App() {
               <RefreshCw size={14} />
               检测连接
             </button>
+            <a href="http://127.0.0.1:8765" target="_blank" rel="noreferrer">
+              打开本机离线工作台 ↗
+            </a>
+            <small>在线页面需允许浏览器访问本机网络；本机入口可直接离线使用。</small>
           </div>
         </section>
       </main>
