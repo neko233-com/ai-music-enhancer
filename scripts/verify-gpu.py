@@ -1,8 +1,10 @@
 """Opt-in integration test: real AudioSR inference with network sockets blocked."""
 
 import sys
+import os
 from pathlib import Path
 
+os.environ["NEKO_DEVICE"] = "cuda"
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 import json

@@ -1,0 +1,18 @@
+{
+  "device": "cpu",
+  "processor": "CPU \u00b7 8 \u7ebf\u7a0b",
+  "threads": 8,
+  "torch": "2.7.1+cpu",
+  "cuda_runtime": null,
+  "model_devices": [
+    "cpu"
+  ],
+  "network": "blocked at socket.connect and create_connection",
+  "input_seconds": 2.0,
+  "frames": 96000,
+  "channels": 1,
+  "steps": 10,
+  "cold_seconds": 42.25,
+  "difference_rms": 0.021200761198997498,
+  "peak": 0.4936045706272125
+}

@@ -1,17 +1,27 @@
 # Verification record
 
-Environment: Windows, Rust 1.96.0, Node 24, Python 3.10, NVIDIA RTX 5070 Ti 16 GB, PyTorch 2.7.1+cu128.
+Current environment: Windows, Rust 1.96.0, Node 24, Python 3.10, AMD Ryzen 9 7900X3D, 8 inference threads, CPU-only PyTorch 2.7.1+cpu. Historical optional GPU tests used an NVIDIA RTX 5070 Ti 16 GB with PyTorch 2.7.1+cu128.
 
 ## Automated checks
 
 - Rust: 6 signal/encoding tests and 1 CLI integration test. Includes all 24 WAV rate/depth combinations, invalid input, stereo isolation, partial RNNoise frames, silence, peak limiting, low-pass alias rejection and overwrite protection.
 - TypeScript: 4 audio input/size tests. Preserves original 192 kHz PCM input, rejects truncated/non-finite WAV, estimates bitrate and samples both channels for waveforms.
-- Local API: 6 tests. Origin/host/header checks, malformed uploads, cancellation between chunks, overlap-add continuity, real FLAC and MP3 encoding.
+- Local API: 9 tests. Origin/host/header checks, malformed uploads, cancellation between chunks, overlap-add continuity, real FLAC and MP3 encoding, CPU selection without CUDA queries, CPU health with/without weights, invalid runtime settings.
 - Browser: 4 portable end-to-end tests. Real WASM processing; actual original/enhanced playback and switching; downloaded 192 kHz float WAV headers; MP3 frames; file upload errors; 390 px mobile overflow check; full offline reload and processing with the browser network disabled; local-network permission failure and the offline entry point.
-- Additional opt-in browser GPU test: actual local AudioSR processing, enhanced playback and FLAC download. Standard CI skips it because hosted runners lack the local GPU/model.
+- Additional opt-in browser CPU/GPU test: actual local AudioSR processing, enhanced playback and FLAC download. Standard CI skips it because hosted runners lack the installed model; local opt-in runs use the real model.
 - `cargo fmt`, `cargo clippy -D warnings`, TypeScript compilation, production build, `actionlint`, `wrangler deploy --dry-run`.
 
-## Real GPU inference
+## Real CPU inference
+
+`scripts/verify-cpu.py` requires `torch.version.cuda is None`, blocks socket connections and CUDA initialization, loads the real locally installed weights, and asserts every model parameter is on CPU. A two-second voice excerpt at 10 steps completed in 42.25 seconds including cold model load. It preserved 96,000 output frames at 48 kHz and produced finite, changed PCM below the peak ceiling. Report: `cpu-verification.json`. No GPU, CUDA runtime or cloud API participates.
+
+This verifies genuine model execution on CPU, not perceptual quality or real-time performance. Input is internally padded to the model's 5.12-second chunk length. Longer recordings, more channels and more steps take longer.
+
+The CPU browser integration test also processed the complete 10.9-second voice demo at the default 50 steps, played the enhanced result and downloaded real 192 kHz FLAC. It passed in about 2.2 minutes including a cold service model load. All five browser tests passed with the CPU-only service.
+
+The Rust CLI independently used the same CPU service at 10 steps and exported a two-second, mono, 192 kHz, 32-bit float WAV (384,000 frames, 1,536,056 bytes), verified with libsndfile. The in-app browser was refreshed and its rendered connection status confirmed `CPU · 8 线程 · 模型就绪`. `artifacts/studio-cpu.png` was inspected with `view_image`; layout and the A/B controls remain consistent with the existing design.
+
+## Historical GPU inference
 
 `scripts/verify-gpu.py` blocks `socket.socket.connect` and `socket.create_connection` before loading AudioSR, then reconstructs a two-second excerpt from each of the six bundled files. No fake model is used in this test. Report: `gpu-verification.json`.
 
@@ -48,4 +58,4 @@ Above-the-fold copy review found only intentional additions recorded in `design/
 
 ## Practical limits
 
-AudioSR generates a plausible reconstruction, not a guaranteed recovery of the original. Model output is natively 48 kHz. Output at 192 kHz is sinc-converted storage. High-rate files and long clips are bounded by explicit memory limits. Fully offline GPU use requires the initial dependency/model install; cached browser-only tuning works without the local model service.
+AudioSR generates a plausible reconstruction, not a guaranteed recovery of the original. Model output is natively 48 kHz. Output at 192 kHz is sinc-converted storage. High-rate files and long clips are bounded by explicit memory limits. Fully offline CPU inference requires the initial dependency/model install and a running local service; cached browser-only tuning works without that service. CPU is the default and does not require a GPU driver or CUDA runtime.

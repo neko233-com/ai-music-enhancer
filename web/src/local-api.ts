@@ -11,7 +11,7 @@ export async function api(path: string, init: RequestInit = {}) {
     });
   } catch {
     throw new Error(
-      '无法连接本机 GPU 服务。请运行 scripts/start-local.ps1；若已启动，请允许浏览器访问本机网络，或从 http://127.0.0.1:8765 打开工作台。',
+      '无法连接本机 AI 服务。请运行 scripts/start-local.ps1（默认 CPU，无需显卡），并打开 http://127.0.0.1:8765。在线页面需允许浏览器访问本机网络。',
     );
   }
   if (!result.ok) {
@@ -24,6 +24,8 @@ export async function health() {
   return (await api('/api/health', { signal: AbortSignal.timeout(5000) })).json() as Promise<{
     ready: boolean;
     gpu: string;
+    processor: string;
+    device: string;
     error?: string;
   }>;
 }

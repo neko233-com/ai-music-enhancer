@@ -165,10 +165,10 @@ export default function App() {
     try {
       let input: AudioData = source;
       if (settings.mode === 'audiosr') {
-        setProgress('正在连接本机 GPU…');
+        setProgress('正在连接本机 AI 服务…');
         const status = await health();
         if (!status.ready) throw new Error(status.error || '请先启动本地服务并安装 AudioSR 模型。');
-        setService(status.gpu);
+        setService(status.processor || status.gpu);
         const form = new FormData();
         form.append('file', waveBlob(source.samples, source.rate, source.channels), 'input.wav');
         for (const key of ['steps', 'seed', 'mix', 'cutoff'] as const)
@@ -189,8 +189,11 @@ export default function App() {
             job.current = null;
             break;
           }
-          setProgress(state.message || 'GPU 正在重建细节…');
-          if (Date.now() - start > 3600000) throw new Error('推理超过一小时，请查看本机服务日志。');
+          setProgress(state.message || '本机模型正在重建细节…');
+          if (Date.now() - start > 86400000) {
+            await api(`/api/jobs/${created.id}`, { method: 'DELETE' });
+            throw new Error('推理超过 24 小时，已请求取消。请缩短片段或减少步数。');
+          }
           await new Promise((r) => setTimeout(r, 1200));
         }
       }
@@ -272,7 +275,7 @@ export default function App() {
     setService('连接中…');
     try {
       const s = await health();
-      setService(s.ready ? `${s.gpu} · 模型就绪` : s.error || '模型未安装');
+      setService(s.ready ? `${s.processor || s.gpu} · 模型就绪` : s.error || '模型未安装');
     } catch {
       setService('未连接 · 请检查本机服务或浏览器网络权限');
     }
@@ -467,7 +470,7 @@ export default function App() {
               音频始终留在你的设备。
             </p>
             <p>
-              GPU 细节重建 / FLAC：首次安装运行 <code>scripts/setup-local.ps1</code>，之后使用{' '}
+              CPU 细节重建 / FLAC：首次安装运行 <code>scripts/setup-local.ps1</code>，之后使用{' '}
               <code>scripts/start-local.ps1</code>。
             </p>
             <details>
@@ -476,7 +479,8 @@ export default function App() {
               </summary>
               <p>
                 首次安装需要联网下载依赖与约 6.2 GB 模型。安装完成后断网，打开 http://127.0.0.1:8765
-                即可使用全部功能。Cloudflare 只提供网页文件；模型推理在本机 GPU 运行。
+                即可使用全部功能。Cloudflare 只提供网页文件；模型推理默认在本机 CPU
+                运行，无需显卡、CUDA 或云端 API。
               </p>
               <p>
                 AudioSR 原生重建至 48
@@ -487,7 +491,7 @@ export default function App() {
             </details>
           </div>
           <div className="service">
-            <span>本机 GPU 服务</span>
+            <span>本机 AI 服务 · 默认 CPU</span>
             <strong>{service}</strong>
             <button className="outline" onClick={() => void checkService()}>
               <RefreshCw size={14} />

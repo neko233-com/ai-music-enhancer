@@ -1,4 +1,4 @@
-# Torch is installed separately from the official CUDA 12.8 index.
+# Torch is installed separately: Windows CPU wheels from PyPI, optional CUDA from PyTorch.
 numpy==1.23.5
 setuptools==80.9.0
 pandas==2.2.3

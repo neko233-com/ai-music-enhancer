@@ -43,9 +43,14 @@ export function SettingsPanel({
           value={s.mode}
           onChange={(e) => set('mode', e.target.value as Settings['mode'])}
         >
-          <option value="local">本地降噪与调音</option>
-          <option value="audiosr">AudioSR · GPU 细节重建</option>
+          <option value="local">浏览器降噪与调音 · 无需服务</option>
+          <option value="audiosr">AudioSR · 本机 AI 细节重建</option>
         </select>
+        <p className="hint">
+          {s.mode === 'audiosr'
+            ? '默认使用本机 CPU，无需 GPU。先启动本机服务；CPU 重建较慢，建议先用短音频和 10 步试听。'
+            : '在浏览器 CPU 上运行 RNNoise 降噪与调音；此模式不运行 AudioSR 细节重建。'}
+        </p>
         <span className="field-label">预设场景</span>
         <div className="segments">
           {(['music', 'voice'] as const).map((p) => (

@@ -1,1 +1,1 @@
-"""Local-only GPU inference companion for the Rust audio engine."""
+"""Offline CPU inference companion for the Rust audio engine; CUDA is optional."""

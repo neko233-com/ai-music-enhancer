@@ -44,6 +44,9 @@ struct Args {
     steps: u32,
     #[arg(long, default_value_t = 233)]
     seed: u32,
+    /// Maximum job duration, in seconds. CPU inference can take much longer than GPU.
+    #[arg(long, default_value_t = 86400, value_parser = clap::value_parser!(u64).range(1..=604800))]
+    timeout_seconds: u64,
     /// Blend inferred high-band detail into the original (0..1)
     #[arg(long, default_value_t = 0.7)]
     mix: f32,
@@ -143,8 +146,15 @@ fn reconstruct(args: &Args, client: &reqwest::blocking::Client, input: Vec<u8>) 
     let id = job["id"].as_str().context("Missing job id")?;
     let start = Instant::now();
     loop {
-        if start.elapsed() > Duration::from_secs(3600) {
-            bail!("AudioSR timed out after one hour; inspect local service");
+        if start.elapsed() > Duration::from_secs(args.timeout_seconds) {
+            let _ = client
+                .delete(base.join(&format!("/api/jobs/{id}"))?)
+                .header("X-Neko-Client", "1")
+                .send();
+            bail!(
+                "AudioSR timed out after {} seconds; increase --timeout-seconds for CPU inference",
+                args.timeout_seconds
+            );
         }
         let state: serde_json::Value = client
             .get(base.join(&format!("/api/jobs/{id}"))?)

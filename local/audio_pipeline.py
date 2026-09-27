@@ -18,6 +18,33 @@ MODEL_PATH = Path(os.environ.get("NEKO_MODEL_PATH", ROOT / "models/audiosr_basic
 _model = None
 
 
+def runtime_info():
+    """CPU is the default even when a GPU is installed; CUDA is an explicit opt-in."""
+    device = os.environ.get("NEKO_DEVICE", "cpu").lower()
+    if device not in ("cpu", "cuda"):
+        raise ValueError("NEKO_DEVICE must be cpu or cuda")
+    threads = int(os.environ.get("NEKO_CPU_THREADS", min(8, os.cpu_count() or 1)))
+    if not 1 <= threads <= 64:
+        raise ValueError("NEKO_CPU_THREADS must be between 1 and 64")
+    if device == "cpu":
+        return {
+            "device": "cpu",
+            "processor": f"CPU · {threads} 线程",
+            "threads": threads,
+        }
+    import torch
+
+    if not torch.cuda.is_available():
+        raise RuntimeError(
+            "CUDA 不可用。请使用默认 CPU 模式，或安装 CUDA 版 PyTorch 与驱动。"
+        )
+    return {
+        "device": "cuda:0",
+        "processor": torch.cuda.get_device_name(),
+        "threads": threads,
+    }
+
+
 def load_model():
     global _model
     if _model is None:
@@ -25,21 +52,21 @@ def load_model():
             raise RuntimeError("AudioSR 模型未安装，请先运行 scripts/setup-local.ps1")
         import torch
 
-        if not torch.cuda.is_available():
-            raise RuntimeError(
-                "未检测到可用的 CUDA GPU，请安装 NVIDIA 驱动及 CUDA 版 PyTorch"
-            )
+        runtime = runtime_info()
+        torch.set_num_threads(runtime["threads"])
         from audiosr.latent_diffusion.models.ddpm import LatentDiffusion
         from audiosr.utils import default_audioldm_config
 
         config = default_audioldm_config("basic")
-        config["model"]["params"]["device"] = "cuda:0"
+        config["model"]["params"]["device"] = runtime["device"]
         model = LatentDiffusion(**config["model"]["params"])
         # Only a pinned, locally verified official state-dict is loaded. Never user uploads.
-        checkpoint = torch.load(str(MODEL_PATH), map_location="cpu", weights_only=True)
+        checkpoint = torch.load(
+            str(MODEL_PATH), map_location="cpu", weights_only=True, mmap=True
+        )
         model.load_state_dict(checkpoint["state_dict"], strict=True)
         del checkpoint
-        _model = model.eval().to("cuda:0")
+        _model = model.eval().to(runtime["device"])
     return _model
 
 
@@ -113,7 +140,7 @@ def reconstruct(
             window[-fade:] = np.linspace(1, 0, fade)
         for channel in range(dry.shape[1]):
             if cancelled():
-                raise InterruptedError("已取消 GPU 任务")
+                raise InterruptedError("已取消本机重建任务")
             progress(index * dry.shape[1] + channel, len(starts) * dry.shape[1])
             chunk = dry[start:end, channel]
             if np.max(np.abs(chunk)) < 1e-6:

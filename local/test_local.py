@@ -93,3 +93,47 @@ def test_mp3_real_encoding():
     )
     assert result.status_code == 200
     assert len(result.content) > 1000
+
+
+def test_cpu_default_does_not_query_cuda(monkeypatch):
+    import sys
+    from types import SimpleNamespace
+    from local.audio_pipeline import runtime_info
+
+    class NoGpu:
+        def __getattr__(self, name):
+            raise AssertionError("Default CPU path must not access CUDA")
+
+    monkeypatch.setitem(sys.modules, "torch", SimpleNamespace(cuda=NoGpu()))
+    monkeypatch.delenv("NEKO_DEVICE", raising=False)
+    monkeypatch.setenv("NEKO_CPU_THREADS", "2")
+    assert runtime_info() == {
+        "device": "cpu",
+        "processor": "CPU · 2 线程",
+        "threads": 2,
+    }
+
+
+def test_cpu_health_ready_without_gpu_and_missing_model_is_explicit(
+    monkeypatch, tmp_path
+):
+    import sys
+    from types import SimpleNamespace
+    from local import server
+
+    monkeypatch.setitem(sys.modules, "torch", SimpleNamespace())
+    monkeypatch.setenv("NEKO_DEVICE", "cpu")
+    model = tmp_path / "model.bin"
+    monkeypatch.setattr(server, "MODEL_PATH", model)
+    assert client.get("/api/health").json()["ready"] is False
+    model.write_bytes(b"test fixture")
+    state = client.get("/api/health").json()
+    assert state["ready"] and state["device"] == "cpu" and state["error"] is None
+
+
+def test_invalid_device_and_threads_fail_clearly(monkeypatch):
+    monkeypatch.setenv("NEKO_DEVICE", "unrecognized")
+    assert "NEKO_DEVICE" in client.get("/api/health").json()["error"]
+    monkeypatch.setenv("NEKO_DEVICE", "cpu")
+    monkeypatch.setenv("NEKO_CPU_THREADS", "0")
+    assert "NEKO_CPU_THREADS" in client.get("/api/health").json()["error"]

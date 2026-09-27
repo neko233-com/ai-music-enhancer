@@ -19,7 +19,7 @@ from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from local.audio_pipeline import MODEL_PATH, ROOT, reconstruct
+from local.audio_pipeline import MODEL_PATH, ROOT, reconstruct, runtime_info
 
 app = FastAPI(title="neko audio local", docs_url=None, redoc_url=None)
 ORIGINS = [
@@ -96,18 +96,26 @@ def load_audio(data):
 
 @app.get("/api/health")
 def health():
-    import torch
+    try:
+        runtime = runtime_info()
+        import torch
 
-    gpu = torch.cuda.get_device_name() if torch.cuda.is_available() else "No CUDA GPU"
-    ready = MODEL_PATH.is_file() and torch.cuda.is_available()
+        ready = MODEL_PATH.is_file()
+        error = None if ready else "请运行 scripts/setup-local.ps1 安装本机模型"
+    except (ImportError, RuntimeError, ValueError) as exc:
+        runtime = {
+            "device": "unavailable",
+            "processor": "本机运行环境未就绪",
+            "threads": 0,
+        }
+        ready, error = False, str(exc)
     return {
         "ready": ready,
-        "gpu": gpu,
+        **runtime,
+        "gpu": runtime["processor"],  # Compatibility with already-cached web clients.
         "model": "AudioSR basic",
         "offline": True,
-        "error": None
-        if ready
-        else "请先运行 scripts/setup-local.ps1 安装模型和 GPU 依赖",
+        "error": error,
     }
 
 
@@ -116,11 +124,12 @@ def run_job(job_id, audio, rate, settings):
     if state["cancel"]:
         state["status"] = "cancelled"
         return
-    state.update(status="running", message="加载本地 AudioSR 模型…")
+    state.update(status="running", message="加载本地 AudioSR 模型，首次加载可能较慢…")
 
     def progress(done, total):
         state.update(
-            message=f"GPU 重建 {done + 1}/{total} 个片段", progress=done / total
+            message=f"本机重建 {done + 1}/{total} 个片段 · 正在推理，请耐心等待",
+            progress=done / total,
         )
 
     try:
@@ -151,7 +160,8 @@ def run_job(job_id, audio, rate, settings):
         try:
             import torch
 
-            torch.cuda.empty_cache()
+            if os.environ.get("NEKO_DEVICE") == "cuda":
+                torch.cuda.empty_cache()
         except Exception:
             pass
 
@@ -179,7 +189,7 @@ async def create_job(
     with lock:
         prune()
         if any(s["status"] in ("queued", "running") for s in jobs.values()):
-            raise HTTPException(409, "GPU 正忙，请等待当前任务完成")
+            raise HTTPException(409, "本机模型正忙，请等待当前任务完成")
         # Keep at most four audio results in memory.
         while len(jobs) >= 4:
             jobs.pop(next(iter(jobs)))
